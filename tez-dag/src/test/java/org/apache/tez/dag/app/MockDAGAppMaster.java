@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -41,6 +42,7 @@ import org.apache.hadoop.yarn.util.Clock;
 import org.apache.tez.client.TezApiVersionInfo;
 import org.apache.tez.common.ContainerContext;
 import org.apache.tez.common.ContainerTask;
+import org.apache.tez.dag.api.TaskCommunicator;
 import org.apache.tez.dag.api.TezUncheckedException;
 import org.apache.tez.dag.app.dag.event.VertexEventRouteEvent;
 import org.apache.tez.dag.app.launcher.ContainerLauncher;
@@ -86,6 +88,7 @@ public class MockDAGAppMaster extends DAGAppMaster {
     
     Map<ContainerId, ContainerData> containers = Maps.newConcurrentMap();
     TaskAttemptListenerImpTezDag taListener;
+    TezTaskCommunicatorImpl taskCommunicator;
     
     AtomicBoolean startScheduling = new AtomicBoolean(true);
     AtomicBoolean goFlag;
@@ -126,6 +129,7 @@ public class MockDAGAppMaster extends DAGAppMaster {
     @Override
     public void serviceStart() throws Exception {
       taListener = (TaskAttemptListenerImpTezDag) getTaskAttemptListener();
+      taskCommunicator = (TezTaskCommunicatorImpl) taListener.getTaskCommunicator();
       eventHandlingThread = new Thread(this);
       eventHandlingThread.start();
     }
@@ -236,7 +240,8 @@ public class MockDAGAppMaster extends DAGAppMaster {
           if (cData.taId == null) {
             // if container is not assigned a task, ask for a task
             try {
-              ContainerTask cTask = taListener.getTask(new ContainerContext(cId.toString()));
+              ContainerTask cTask =
+                  taskCommunicator.getUmbilical().getTask(new ContainerContext(cId.toString()));
               if (cTask == null) {
                 continue;
               }
