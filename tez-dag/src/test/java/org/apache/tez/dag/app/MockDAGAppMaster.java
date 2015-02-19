@@ -344,10 +344,11 @@ public class MockDAGAppMaster extends DAGAppMaster {
     this.initFailFlag = initFailFlag;
     this.startFailFlag = startFailFlag;
   }
-  
+
   // use mock container launcher for tests
   @Override
-  protected ContainerLauncherRouter createContainerLauncherRouter(final Configuration conf)
+  protected ContainerLauncherRouter createContainerLauncherRouter(final Configuration conf,
+                                                                  String[] containerLaunchers)
       throws UnknownHostException {
     return new ContainerLauncherRouter(containerLauncher);
   }
